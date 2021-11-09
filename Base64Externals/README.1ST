@@ -1,0 +1,38 @@
+These files are included here in the event they get lost from their proper positions.
+~~~~~~~~~~~~~~~~~~~~
+File Descriptions:
+~~~~~~~~~~~~~~~~~~~~
+Base64Math.h is used to provide programmers which use the libraries with the necessary function prototypes.
+~~~~~~~~~~~~~~~~~~~~
+Base64Math.lib gives the linker the symbols table for the symbols in the .dll, so it knows where in the .dll the functions are.
+~~~~~~~~~~~~~~~~~~~~
+Base64Math.dll contains the executable code.
+~~~~~~~~~~~~~~~~~~~~
+
+For usage during runtime: Ensure that Base64Math.dll is in the same folder as your .exe which is using the .dll
+
+For development: Ensure that Base64Math.dll is in the same folder as your .exe or at least in the path.
+		 Ensure that Base64Math.lib is also in the same folder as the .dll, or at least in the linkers' path.
+		 Ensure that Base64.Math.h is in the projects' root directory, or at least in the compilers' include path.
+
+Diagram:
+
+/-
+ |____________
+ |           |
+Base64Math.h |
+             |
+     .\x64\Debug(\/)Release\	
+      _______|_______
+      |             |
+      |             |
+ Base64Math.dll Base64Math.lib             
+
+Key: (\/) means logical OR
+
+When working on a new system, ensure you always update to the newest versions of the .h, .lib and .dll files, by copying from the workspace
+manually, or by downloading from GitHub. 
+Replace BOTH the copies in this folder and the copies in the directory tree manually with the new copies wherever you can.
+Feel free to turn on the Pre/Post-Build xcopy scripts iff they will work for you. 
+Two such scripts can be found, one in Debug and one in Release.
+
