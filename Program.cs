@@ -1,138 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
+using Base64MathSpace;
 
-namespace MyApp
+namespace Base64PInvokeTest
 {
-    public class Base64Math
-    {
-        public class B64ReturnData  //Struct to encapsulate the data that is needed to be returned to and from these internal functions
-        {
-            private int returnCode;
-            private byte[] returnArray;
-            public int ReturnCode
-            {
-                get { return returnCode; }
-                protected internal set {  returnCode = value; }  //Only want this methods in this class and derivations to be able to set values
-            }
-            public byte [] ReturnArray 
-            { 
-                get { return returnArray; }
-                internal internal set { returnArray = value; }  
-            }
-        }
-
-        [DllImport("Base64Math.dll")]
-        private static extern int add64(byte[] input1, byte[] input2, byte[] returnBuffer, int lengthOfReturnBuffer);
-        [DllImport("Base64Math.dll")]
-        private static extern int sub64(byte[] input1, byte[] input2, byte[] returnBuffer, int lengthOfReturnBuffer);
-
-        public B64ReturnData Add64(string firstNumber, string secondNumber)
-        {
-            const int lengthOfReturnBuffer = 9;
-            byte[] firstNumberASCII = Encoding.ASCII.GetBytes(firstNumber);
-            byte[] secondNumberASCII = Encoding.ASCII.GetBytes(secondNumber);
-            byte[] returnBuffer = new byte[lengthOfReturnBuffer];
-            B64ReturnData b64ReturnData = new B64ReturnData();
-
-            int returnValue = add64(firstNumberASCII, secondNumberASCII, returnBuffer, lengthOfReturnBuffer);
-
-            b64ReturnData.ReturnCode = returnValue;
-            b64ReturnData.ReturnArray = returnBuffer;
-            return b64ReturnData;
-        }
-
-        public B64ReturnData Sub64(string firstNumber, string secondNumber)
-        {
-            const int lengthOfReturnBuffer = 9;
-            byte[] firstNumberASCII = Encoding.ASCII.GetBytes(firstNumber);
-            byte[] secondNumberASCII = Encoding.ASCII.GetBytes(secondNumber);
-            byte[] returnBuffer = new byte[lengthOfReturnBuffer];
-            B64ReturnData b64ReturnData = new B64ReturnData();
-
-            int returnValue = sub64(firstNumberASCII, secondNumberASCII, returnBuffer, lengthOfReturnBuffer);
-
-            b64ReturnData.returnCode = returnValue;
-            b64ReturnData.returnArray = returnBuffer;
-            return b64ReturnData;
-        }
-        public string Read64BitNumber(string prompt)
-        {
-            //Note this does NOT check for valid input characters! The library functions will return a non-zero value to the caller in such cases.
-            char[] inBuffer = new char[8];  //Max number of chars in buffer
-            int i = 7;
-            int x;
-            char ch;
-            Console.Write(prompt);
-            while (i != 0)
-            {
-                x = (int)Console.ReadKey().Key; //getchar, with explicit cast (shock, horror! :o)
-                try
-                {
-                    ch = Convert.ToChar(x); //Convert because C# is like that. Structured error handling galore!!
-
-                    switch (x)
-                    {
-                        case 0x000A:    // If the user presses LF, zero extend the value in the buffer
-                            while (i > -1)
-                            {
-                                inBuffer[i] = '0';
-                                i--;
-                            }
-                            break;
-
-                        case 0x0008:    // If the user presses backspace AND we are not at the beginning of the buffer, increment buffer counter.
-                            if (i < 7)
-                            {
-                                i++;
-                                Console.Write(" "); //Backspace should remove whatever char is there... this isnt BIOS anymore, someone might _use_ this...
-                            }
-                            break;
-
-                        case 0x0020:    // If the user presses the space key, beep aggressively at the user
-                            Console.Beep();
-                            break;
-
-                        case 0x0009:
-                            Console.Beep(); // IF the user presses the beep key, beep aggressively at the user
-                            break;
-
-                        default:       // Otherwise, insert the char, unless it causes errors
-                            inBuffer[i] = ch;
-                            i--;
-                            break;
-                    }
-                }
-                catch (OverflowException e)
-                {
-                    //If an error, flush the buffer and return a 0 value.
-                    for (i = 7; i > -1; i--)
-                    {
-                        inBuffer[i] = '0';
-                        Console.WriteLine("\nInput Error!");
-                    }
-                }
-            }
-
-            return new string(inBuffer);
-        }
-    }
-
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
             Base64Math base64Dispatcher = new Base64Math(); //Be a good adherent to Object Oriented Paradigms. 
+            bool state = true;
 
-            Console.WriteLine("Please enter your first 64 bit number ");
-            string input1 = base64Dispatcher.Read64BitNumber(">");
 
-            Console.WriteLine("Please enter your second 64 bit number ");
-            string input2 = base64Dispatcher.Read64BitNumber(">");
+            Console.WriteLine("Base 64 arithmetic x86-64 DLL test application\n\nWritten by Yll Buzoku\n\n" +
+                "Instructions for use:" +
+                "\n1) When prompted, please type in the number you wish to compute with, in our proprietary Buzoku Base 64 encoding(C)." +
+                "\n2) Numbers are processed in the Little Endian format." +
+                "\n3) Numbers can be at most 8 digits long." +
+                "\n4) If more than 8 digits are typed in, only the FIRST 8 digits will be processed, in Little Endian format" +
+                "\n5) Base 64 numbers are postfixed with the £ symbol.\n");
+            while (state)
+            {
+                Console.WriteLine("Please enter the first number ");
+                string input1 = base64Dispatcher.Read64BitNumber(">");
 
-            returnArrayAdd = base64Dispatcher.Add64(input1, input2);
+                Console.WriteLine("Please enter the second number ");
+                string input2 = base64Dispatcher.Read64BitNumber(">");
+
+                B64ReturnData ret1 = base64Dispatcher.Add64(input1, input2);
+                B64ReturnData ret2 = base64Dispatcher.Sub64(input1, input2);
+                if (ret1.ReturnCode != 0 || ret2.ReturnCode != 0)
+                {
+                    Console.WriteLine("Bad input argument!");
+                }
+                else
+                {
+                    Console.WriteLine("\n |{0}£                |{1}£", input1, input1);
+                    Console.WriteLine(" |{0}£ +              |{1}£ -", input2, input2);
+                    Console.WriteLine("------------              ------------");
+                    Console.WriteLine(" {0}£                {1}£", Encoding.ASCII.GetString(ret1.ReturnArray), Encoding.ASCII.GetString(ret2.ReturnArray));
+                }
+
+                bool state2 = true; //Reinitialise the second state machine
+                while (state2)
+                {
+                    Console.WriteLine("\nDo you want to do another calculation? (y/n)");
+                    char ch = char.ToUpper(Console.ReadKey(true).KeyChar);    //Get char in upper case form, the true means it does NOT echo the char onto the console
+                    switch (ch)
+                    {
+                        case 'Y':
+                            Console.WriteLine("\nAwesome!\n");
+                            state2 = false; //Exit y/n loop
+                            break;
+                        case 'N':
+                            Console.WriteLine("\nGoodbye!\nThank you for using the Base 64 arithmetic test app!\n");
+                            state2 = false; //Exit y/n loop
+                            state = false;  //Exit program main loop
+                            break;
+                        default:
+                            Console.WriteLine("\nPlease type in either y for yes or n for no\n");
+                            break;
+                    }
+                }
+            }
         }
     }
 }
